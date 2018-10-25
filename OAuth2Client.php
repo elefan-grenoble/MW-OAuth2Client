@@ -58,7 +58,10 @@ class OAuth2ClientHooks {
 				wfArrayToCGI( array( 'returnto' => $page ) )
 			);
 		}
-
+		//BEGIN GJANSSENS
+		unset($personal_urls['login']);
+		unset($personal_urls['createaccount']);
+		//END GJANSSENS
 		if( isset( $personal_urls['anonlogin'] ) ) {
 			if( $inExt ) {
 				$personal_urls['anonlogin']['href'] = Skin::makeSpecialUrl( 'Userlogin' );
