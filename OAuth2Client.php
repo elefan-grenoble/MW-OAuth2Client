@@ -52,14 +52,11 @@ class OAuth2ClientHooks {
 			'text' => $service_login_link_text,
 			'active' => false,
 		];
+		$redirect = SpecialPage::getTitleFor( 'OAuth2Client', 'redirect' );
 		if( $inExt ) {
-			$oauth_login['href'] = Skin::makeSpecialUrlSubpage( 'OAuth2Client', 'redirect' );
+			$oauth_login['href'] = $redirect->getLocalURL();
 		} else {
-			$oauth_login['href'] = Skin::makeSpecialUrlSubpage(
-				'OAuth2Client',
-				'redirect',
-				wfArrayToCGI( array( 'returnto' => $page ) )
-			);
+			$oauth_login['href'] = $redirect->getLocalURL( [ 'returnto' => $page->getPrefixedText() ] );
 		}
 
 		$userMenu = $links['user-menu'] ?? [];
