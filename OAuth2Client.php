@@ -18,18 +18,27 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This is a MediaWiki extension, and must be run from within MediaWiki.' );
 }
 class OAuth2ClientHooks {
-	public static function onPersonalUrls( array &$personal_urls, Title $title ) {
+	/**
+	 * Adds the "login with OAuth2" link to the user menu (top right) for anonymous users,
+	 * and removes the classic login / account creation links.
+	 *
+	 * Replaces the PersonalUrls hook, removed in MediaWiki 1.43.
+	 *
+	 * @param SkinTemplate $skin
+	 * @param array &$links
+	 */
+	public static function onSkinTemplateNavigationUniversal( SkinTemplate $skin, array &$links ) {
+		global $wgOAuth2Client;
 
-		global $wgOAuth2Client, $wgUser, $wgRequest;
-		if( $wgUser->isLoggedIn() ) return true;
-
+		if ( $skin->getUser()->isRegistered() ) {
+			return true;
+		}
 
 		# Due to bug 32276, if a user does not have read permissions,
 		# $this->getTitle() will just give Special:Badtitle, which is
 		# not especially useful as a returnto parameter. Use the title
 		# from the request instead, if there was one.
-		# see SkinTemplate->buildPersonalUrls()
-		$page = Title::newFromURL( $wgRequest->getVal( 'title', '' ) );
+		$page = Title::newFromURL( $skin->getRequest()->getVal( 'title', '' ) );
 
 		$service_name = isset( $wgOAuth2Client['configuration']['service_name'] ) && 0 < strlen( $wgOAuth2Client['configuration']['service_name'] ) ? $wgOAuth2Client['configuration']['service_name'] : 'OAuth2';
 		if( isset( $wgOAuth2Client['configuration']['service_login_link_text'] ) && 0 < strlen( $wgOAuth2Client['configuration']['service_login_link_text'] ) ) {
@@ -39,34 +48,26 @@ class OAuth2ClientHooks {
 		}
 
 		$inExt = ( null == $page || ('OAuth2Client' == substr( $page->getText(), 0, 12) ) || strstr($page->getText(), 'Logout') );
-		$personal_urls['anon_oauth_login'] = array(
+		$oauth_login = [
 			'text' => $service_login_link_text,
-			//'class' => ,
 			'active' => false,
-		);
+		];
 		if( $inExt ) {
-			$personal_urls['anon_oauth_login']['href'] = Skin::makeSpecialUrlSubpage( 'OAuth2Client', 'redirect' );
+			$oauth_login['href'] = Skin::makeSpecialUrlSubpage( 'OAuth2Client', 'redirect' );
 		} else {
-			# Due to bug 32276, if a user does not have read permissions,
-			# $this->getTitle() will just give Special:Badtitle, which is
-			# not especially useful as a returnto parameter. Use the title
-			# from the request instead, if there was one.
-			# see SkinTemplate->buildPersonalUrls()
-			$personal_urls['anon_oauth_login']['href'] = Skin::makeSpecialUrlSubpage(
+			$oauth_login['href'] = Skin::makeSpecialUrlSubpage(
 				'OAuth2Client',
 				'redirect',
 				wfArrayToCGI( array( 'returnto' => $page ) )
 			);
 		}
+
+		$userMenu = $links['user-menu'] ?? [];
 		//BEGIN GJANSSENS
-		unset($personal_urls['login']);
-		unset($personal_urls['createaccount']);
+		unset( $userMenu['login'], $userMenu['login-private'], $userMenu['createaccount'] );
 		//END GJANSSENS
-		if( isset( $personal_urls['anonlogin'] ) ) {
-			if( $inExt ) {
-				$personal_urls['anonlogin']['href'] = Skin::makeSpecialUrl( 'Userlogin' );
-			}
-		}
+		$links['user-menu'] = [ 'anon_oauth_login' => $oauth_login ] + $userMenu;
+
 		return true;
 	}
 

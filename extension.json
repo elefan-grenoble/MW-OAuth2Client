@@ -18,8 +18,8 @@
 		"OAuth2ClientAlias": "OAuth2Client.alias.php"
 	},
 	"Hooks": {
-		"PersonalUrls": [
-			"OAuth2ClientHooks::onPersonalUrls"
+		"SkinTemplateNavigation::Universal": [
+			"OAuth2ClientHooks::onSkinTemplateNavigationUniversal"
 		]
 	},
 	"SpecialPages": {
@@ -30,5 +30,8 @@
 			"i18n"
 		]
 	},
-	"manifest_version": 1
+	"manifest_version": 1,
+	"requires": {
+		"MediaWiki": ">= 1.39.0"
+	}
 }
